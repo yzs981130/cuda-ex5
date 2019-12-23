@@ -53,7 +53,7 @@ void gpu_mat_mul_kernel(float* M, float* N, float* P, int m, int p, int n){
     __syncthreads();
   }
 
-  P[Row * p + Col] = sum;
+  P[Row * n + Col] = sum;
 }
 
 void gpu_mat_mul(float* h_M, float* h_N, float* h_P, int m, int p, int n) {
@@ -77,7 +77,7 @@ void gpu_mat_mul(float* h_M, float* h_N, float* h_P, int m, int p, int n) {
   cudaEventCreate(&stop);
   cudaEventRecord(start, 0);
 
-  dim3 grid_dim(width/BLOCK_WIDTH, width/BLOCK_WIDTH, 1);
+  dim3 grid_dim(n/BLOCK_WIDTH + 1, m/BLOCK_WIDTH + 1, 1);
   dim3 block_dim(BLOCK_WIDTH, BLOCK_WIDTH, 1);
   gpu_mat_mul_kernel<<<grid_dim, block_dim>>>(d_M, d_N, d_P, m, p, n);
   cudaEventRecord(stop, 0);
