@@ -40,7 +40,7 @@ void gpu_mat_mul_kernel(float* M, float* N, float* P, int m, int p, int n){
     }
 
     if ((ph * TILE_WIDTH + ty) < p && Col < n) {
-      Nds[ty][tx] = N[(ph * TILE_WIDTH + ty) * n + Col]
+      Nds[ty][tx] = N[(ph * TILE_WIDTH + ty) * n + Col];
     }
     else {
       Nds[ty][tx] = 0;
@@ -53,7 +53,7 @@ void gpu_mat_mul_kernel(float* M, float* N, float* P, int m, int p, int n){
     __syncthreads();
   }
 
-  P[Row * width + Col] = sum;
+  P[Row * p + Col] = sum;
 }
 
 void gpu_mat_mul(float* h_M, float* h_N, float* h_P, int m, int p, int n) {
