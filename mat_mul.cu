@@ -5,10 +5,10 @@
 #define BLOCK_WIDTH 16 
 #define TILE_WIDTH  BLOCK_WIDTH
 
-extern "C" void gpu_mat_mul(float* h_M, float* h_N, float* h_P, int width);
+extern "C" void gpu_mat_mul(float* h_M, float* h_N, float* h_P, int m, int p, int n);
 
 __global__
-void gpu_mat_mul_kernel(float* M, float* N, float* P, int width){
+void gpu_mat_mul_kernel(float* M, float* N, float* P, int m, int p, int n){
 
   __shared__ float Mds[TILE_WIDTH][TILE_WIDTH];
   __shared__ float Nds[TILE_WIDTH][TILE_WIDTH];
@@ -24,14 +24,27 @@ void gpu_mat_mul_kernel(float* M, float* N, float* P, int width){
   int Col = bx * TILE_WIDTH + tx;
 
   float sum = 0;
-  int phase_num = width/TILE_WIDTH;
+  int phase_num = p/TILE_WIDTH + 1;
 
   // Each thread loads 'Row'th row of M and 'Col'th column of N
   for (int ph = 0; ph < phase_num; ph++) {    
 
     // Collaboratively load data into shared memory
-    Mds[ty][tx] = M[Row * width + ph * TILE_WIDTH + tx];   
-    Nds[ty][tx] = N[(ph * TILE_WIDTH + ty) * width + Col];
+    //Mds[ty][tx] = M[Row * width + ph * TILE_WIDTH + tx];   
+    //Nds[ty][tx] = N[(ph * TILE_WIDTH + ty) * width + Col];
+    if ((ph * TILE_WIDTH + tx) < p && Row < m) {
+      Mds[ty][tx] = M[Row * p + ph * TILE_WIDTH + tx];
+    }
+    else {
+      Mds[ty][tx] = 0;
+    }
+
+    if ((ph * TILE_WIDTH + ty) < p && Col < n) {
+      Nds[ty][tx] = N[(ph * TILE_WIDTH + ty) * n + Col]
+    }
+    else {
+      Nds[ty][tx] = 0;
+    }
 
     __syncthreads();
     for (int k = 0; k < TILE_WIDTH; k++) { 
@@ -43,13 +56,13 @@ void gpu_mat_mul_kernel(float* M, float* N, float* P, int width){
   P[Row * width + Col] = sum;
 }
 
-void gpu_mat_mul(float* h_M, float* h_N, float* h_P, int width) {
+void gpu_mat_mul(float* h_M, float* h_N, float* h_P, int m, int p, int n) {
   float *d_M, *d_N, *d_P;
 
   size_t size_of_float = sizeof(float);
-  size_t size_M = width * width * size_of_float;
-  size_t size_N = width * width * size_of_float;
-  size_t size_P = width * width * size_of_float;
+  size_t size_M = m * p * size_of_float;
+  size_t size_N = p * n * size_of_float;
+  size_t size_P = m * n * size_of_float;
 
   cudaMalloc((void**)&d_M, size_M);
   cudaMalloc((void**)&d_N, size_N);
@@ -66,7 +79,7 @@ void gpu_mat_mul(float* h_M, float* h_N, float* h_P, int width) {
 
   dim3 grid_dim(width/BLOCK_WIDTH, width/BLOCK_WIDTH, 1);
   dim3 block_dim(BLOCK_WIDTH, BLOCK_WIDTH, 1);
-  gpu_mat_mul_kernel<<<grid_dim, block_dim>>>(d_M, d_N, d_P, width);
+  gpu_mat_mul_kernel<<<grid_dim, block_dim>>>(d_M, d_N, d_P, m, p, n);
   cudaEventRecord(stop, 0);
   cudaEventSynchronize(stop);
 

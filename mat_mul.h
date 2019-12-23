@@ -5,9 +5,9 @@
 #include <time.h>
 #include <sys/time.h>
 
-void cpu_mat_mul(float* h_A, float* h_B, float* h_C, int width);
+void cpu_mat_mul(float* h_A, float* h_B, float* h_C, int m, int p, int n);
 
-void gpu_mat_mul(float* h_A, float* h_B, float* h_C, int width);
+void gpu_mat_mul(float* h_A, float* h_B, float* h_C, int m, int p, int n);
 
 // Returns a randomized matrix containing mxn elements
 static inline float *rand_mat(int m, int n) {
