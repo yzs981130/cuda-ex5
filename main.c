@@ -43,7 +43,7 @@ int main(int argc, char **argv){
   }
 	
   // Report the correctness results
-  if (num_wrong) printf("GPU %d / %d values incorrect\n", num_wrong, N);
+  if (num_wrong) printf("GPU %d / %d values incorrect\n", num_wrong, m * n);
   else           printf("GPU all values correct\n");
 
 }

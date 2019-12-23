@@ -47,13 +47,16 @@ void gpu_mat_mul_kernel(float* M, float* N, float* P, int m, int p, int n){
     }
 
     __syncthreads();
-    for (int k = 0; k < TILE_WIDTH; k++) { 
-      sum += Mds[ty][k] * Nds[k][tx];
+    if (Row < m && Col < n) {
+      for (int k = 0; k < TILE_WIDTH; k++) { 
+        sum += Mds[ty][k] * Nds[k][tx];
+      }
     }
     __syncthreads();
   }
-
-  P[Row * n + Col] = sum;
+  if (Row < m && Col < n) {
+    P[Row * n + Col] = sum;
+  }  
 }
 
 void gpu_mat_mul(float* h_M, float* h_N, float* h_P, int m, int p, int n) {
